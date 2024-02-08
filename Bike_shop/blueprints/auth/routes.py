@@ -27,8 +27,8 @@ def signup():
         email = registerform.email.data
         password = registerform.password.data 
         
-        print('Register Form', email, password) # testing that we are getting data from the form
-        
+        print('Register Form', email, password, username) # testing that we are getting data from the form
+                                                # added username just incase and nothing!!!
         # query into our database to check if the username and/or email already exists 
         
         if User.query.filter(User.username == username).first():
