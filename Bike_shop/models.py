@@ -5,6 +5,8 @@ from datetime import datetime                       # put a timestamp on any dat
 import uuid                                         # makes a unique id for our data (primary key)
 from flask_marshmallow import Marshmallow
 
+from.helpers import get_image
+
 # instantiate all our classes
 db = SQLAlchemy() # make database object
 login_manager = LoginManager() # makes login object 
@@ -90,7 +92,7 @@ class Product(db.Model): # db.Model helps us translate python code to columns in
     def set_image(self, image, name):
 
         if not image: # aka the user did not give us an image
-            pass
+            image = get_image(name) # name is our argument replacing the search parameter in our get_image() function
             # come back and add our api call
 
         return image
@@ -124,5 +126,5 @@ class ProductSchema(ma.Schema):
 
 
 # instantiate our ProductSchema class so we can use them in our application
-product_schema = ProductSchema() #this is 1 singular product
-products_schema = ProductSchema(many=True) #bringing back all the products in our database & sending to frontend
+product_schema = ProductSchema() # 1 singular product dictionary
+products_schema = ProductSchema(many=True) # a list of many product dictionaries. bringing back all the products in our database & sending to frontend
