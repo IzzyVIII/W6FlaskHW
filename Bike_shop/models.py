@@ -75,6 +75,7 @@ class Product(db.Model): # db.Model helps us translate python code to columns in
     quantity = db.Column(db.Integer, nullable=False)
     date_added = db.Column(db.DateTime, default = datetime.utcnow)
     # eventually we need to connect this to orders 
+    prodord = db.relationship('ProdOrder', backref = 'product', lazy=True) # establishing relationship between ProdOrder & Product table
 
     def __init__(self, name, price, quantity, image="", description=""):
         self.prod_id = self.set_id()
@@ -113,6 +114,104 @@ class Product(db.Model): # db.Model helps us translate python code to columns in
         return f"<Product: {self.name}>"
     
 
+# only need this for purposes of tracking what customers are tied to what orders & also how many customers we have
+class Customer(db.Model):
+    # CREATE TABLE
+    cust_id = db.Column(db.String, primary_key=True)
+    date_created = db.Column(db.DateTime, default = datetime.utcnow())
+    # this is how we tie a table to another one (so not a column but establishing a relationship)
+    prodord = db.relationship('ProdOrder', backref = 'customer', lazy=True) #lazy = True means is we dont need the ProdOrder table to have a customer
+
+    def __init__(self, cust_id):
+        self.cust_id = cust_id # when a customer makes an order on the frontend they will pass us their cust_id 
+
+
+    def __repr__(self):
+        return f"<Customer: {self.cust_id}>"
+    
+
+
+class Order(db.Model):
+    # CREATE TABLE
+    order_id = db.Column(db.String, primary_key=True)
+    order_total = db.Column(db.Numeric(precision=10, scale=2), nullable = False)
+    date_created = db.Column(db.DateTime, default = datetime.utcnow())
+    prodord = db.relationship('ProdOrder', backref = 'order', lazy=True) #establishing that relationship, NOT A COLUMN
+    # We need to create that relationship between our join table
+    prodord = db.relationship('ProdOrder', backref = 'order', lazy=True) # establishing relationship between ProdOrder & order table
+
+    def __init__(self):
+        self.order_id = self.set_id()
+        self.order_total = 0.00 # starting our order off at $0
+
+    
+    def set_id(self):
+        return str(uuid.uuid4())
+    
+    # method to increase our order total
+    def increment_ordertotal(self, price):
+
+        self.order_total = float(self.order_total) # just making sure its a float 
+        self.order_total += float(price)
+
+        return self.order_total
+    
+    # mehtod to decrement the order total for when people update or delete their order
+    def decrement_ordertotal(self, price):
+
+        self.order_total = float(self.order_total) #just making sure its a float 
+        self.order_total -= float(price)
+
+        return self.order_total
+    
+
+    def __repr__(self):
+        return f"<Order: {self.order_id}>"
+
+    
+
+#example of a join table
+#because Products can be on many Orders
+#and Orders can have many Products (many-to-many) relationship needs a Join table
+
+class ProdOrder(db.Model):
+    # CREATE TABLE
+    prodorder_id = db.Column(db.String, primary_key=True)
+    #first instance of using a foreign key that is a primary key on another table
+    prod_id = db.Column(db.String, db.ForeignKey('product.prod_id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable = False)
+    price = db.Column(db.Numeric(precision = 10, scale = 2), nullable = False)
+    order_id = db.Column(db.String, db.ForeignKey('order.order_id'), nullable = False)
+    cust_id = db.Column(db.String, db.ForeignKey('customer.cust_id'), nullable = False)
+
+
+    def __init__(self, prod_id, quantity, price, order_id, cust_id):
+        self.prodorder_id = self.set_id()
+        self.prod_id = prod_id 
+        self.quantity = quantity # how much quantity of that product the customer is buying
+        self.price = self.set_price(quantity, price) # total price of that quantity of product
+        self.order_id = order_id
+        self.cust_id = cust_id 
+
+
+    def set_id(self):
+        return str(uuid.uuid4())
+    
+
+
+    def set_price(self, quantity, price):
+
+        quantity = int(quantity)
+        price = float(price)
+
+        self.price = quantity * price #this total price for that product multiplied by quantity purchased 
+        return self.price
+    
+
+    def update_quantity(self, quantity):
+
+        self.quantity = int(quantity)
+        return self.quantity
 
 # creating our Schema class (Schema essentially just means what our data "looks" like, and our 
 # data needs to look like a dictionary (json) not an object)

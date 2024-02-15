@@ -1,2 +1,5 @@
 bikes_env
 .env
+__pycache__
+image_cache.sqlite
+migrations

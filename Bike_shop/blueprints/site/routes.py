@@ -2,7 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request
 # MAKE SURE YOU UPDATE ANY NECESSARY IMPORTS ABOVE AND BELOW HERE
 
 #internal import 
-from Bike_shop.models import Product, db 
+from Bike_shop.models import Product, Customer, Order, db 
 from Bike_shop.forms import ProductForm
 
 # instantiate our Blueprint class
@@ -16,11 +16,19 @@ site = Blueprint('site', __name__, template_folder='site_templates')
 def shop():
     #we need to query our database to grab all of our products to display
     allprods = Product.query.all() #the same as SELECT * FROM products, list of objects 
+    allcustomers = Customer.query.all()
+    allorders = Order.query.all()
+
+    shop_stats = {
+        'products' : len(allprods), # allprods is a list of objects, so counting how many objects
+        'sales' : sum([order.order_total for order in allorders]),  # looping through allorders list, order is each object and I'm grabbing the order_total & summing them all up
+        'customers' : len(allcustomers)
+    }
 
     #our_class = "Rangers are the best "
                             #whats on left side is html, right side is whats in our route
     
-    return render_template('shop.html', shop=allprods) # looking inside site_templates folder for a file called shop.html to render
+    return render_template('shop.html', shop=allprods, stats=shop_stats) # looking inside site_templates folder for a file called shop.html to render
 
 
 @site.route('/shop/create', methods= ['GET', 'POST'])
